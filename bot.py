@@ -58,7 +58,7 @@ async def add_ongoing(query: CallbackQuery, state: FSMContext):
         chat_id=query.from_user.id,
         text='Чтобы добавить онгоинг в список отслеживания, '
              'отправь на него ссылку с <a href="https://shikimori.one/animes">Shikimori</a>:',
-        reply_markup=keyboard.back())
+        reply_markup=keyboard.back(), disable_web_page_preview=True)
     await state.set_state(states.Ongoing.add.state)
     await state.update_data(msg=msg)
 
@@ -74,7 +74,7 @@ async def del_ongoing(query: CallbackQuery, state: FSMContext):
         chat_id=query.from_user.id,
         text='Чтобы удалить онгоинг из списка отслеживания, '
              'отправь на него ссылку с <a href="https://shikimori.one/animes">Shikimori</a>:',
-        reply_markup=keyboard.back())
+        reply_markup=keyboard.back(), disable_web_page_preview=True)
     await state.set_state(states.Ongoing.delete.state)
     await state.update_data(msg=msg)
 
@@ -96,10 +96,8 @@ async def my_ongoings(query: CallbackQuery, state: FSMContext):
             nextep = datetime.fromtimestamp(Track.get(Track.shikiid == i.shikiid).nextep).strftime("%d.%m в %H:00")
             text += (f'[{k + 1}]. id{i.shikiid} | '
                      f'<a href="https://shikimori.one/animes/{i.shikiid}">{animename(i.shikiid)}</a> | {nextep}\n')
-    msg = await bot.send_message(
-        chat_id=query.from_user.id,
-        text=text,
-        reply_markup=keyboard.back())
+    msg = await bot.send_message(chat_id=query.from_user.id, text=text, reply_markup=keyboard.back(),
+                                 disable_web_page_preview=True)
     await state.update_data(msg=msg)
 
 
@@ -140,7 +138,7 @@ async def statehandler(message: Message, state: FSMContext):
             msg = await bot.send_message(
                 chat_id=message.from_user.id,
                 text='⚠️ Неизвестный статус аниме. Пожалуйста, свяжитесь со <a href="https://t.me/d1n0_zvr">мной</a>.',
-                reply_markup=keyboard.back())
+                reply_markup=keyboard.back(), disable_web_page_preview=True)
             await state.update_data(msg=msg)
             return
         id = int(id)

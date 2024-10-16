@@ -61,7 +61,7 @@ async def send_message_to_users_handler(
 ) -> bool:
     try:
         await bot.send_photo(user_id, photo=URLInputFile(photo), caption=caption,
-                             disable_notification=disable_notification)
+                             disable_notification=disable_notification, disable_web_page_preview=True)
     except exceptions.TelegramForbiddenError:
         logging.error(f"Target [ID:{user_id}]: blocked by user")
     except exceptions.TelegramNotFound:
