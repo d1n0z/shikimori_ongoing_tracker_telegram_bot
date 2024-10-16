@@ -1,0 +1,12 @@
+.p
+.idea
+.__pycache__
+.config
+config.ini
+dev
+*.db
+*old.py
+*new.py
+venv
+test.py
+requirements.txt
