@@ -12,9 +12,9 @@ def main():
     logging.info('0%   loading . . . . .')
     time.sleep(0.01)
     loop = asyncio.new_event_loop()
-    logging.info('100% loading complete!!')
     loop.create_task(scheduler.run())
     loop.create_task(dp.start_polling(bot))
+    logging.info('100% loading complete!!')
     loop.run_forever()
 
 

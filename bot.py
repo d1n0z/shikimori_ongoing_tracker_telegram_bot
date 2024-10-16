@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 
 from aiogram import Dispatcher, F
 from aiogram.filters import CommandStart, Command
@@ -22,16 +23,27 @@ async def start_handler(message: Message) -> None:
 
 
 @dp.callback_query(keyboard.Callback.filter(F.type == 'settings'))
+async def settings(message: Message, state: FSMContext) -> None:
+    try:
+        msg: Message = (await state.get_data())['msg']
+        await msg.delete()
+    except:
+        pass
+    msg = await bot.send_message(chat_id=message.from_user.id, text='Что смотрим?',
+                                 reply_markup=keyboard.settings())
+    await state.clear()
+    await state.update_data(msg=msg)
+
+
 @dp.message(Command('settings'))
 async def settings(message: Message, state: FSMContext) -> None:
-    statedata = await state.get_data()
-    if 'msg' in statedata:
-        await statedata['msg'].delete()
-        await state.clear()
-        msg = await bot.send_message(chat_id=message.from_user.id,
-                                     text='Что смотрим?', reply_markup=keyboard.settings())
-    else:
-        msg = await message.answer('Что смотрим?', reply_markup=keyboard.settings())
+    try:
+        msg: Message = (await state.get_data())['msg']
+        await msg.delete()
+    except:
+        pass
+    msg = await message.answer('Что смотрим?', reply_markup=keyboard.settings())
+    await state.clear()
     await state.update_data(msg=msg)
 
 
@@ -79,9 +91,11 @@ async def my_ongoings(query: CallbackQuery, state: FSMContext):
         text = 'Нет отслеживаемых онгоингов.'
     else:
         text = 'Список отслеживаемых онгоингов:\n'
-        for i in ongoings:
+        for k, i in enumerate(ongoings):
             i: UsersTrack
-            text += f'id{i.shikiid} | {animename(i.shikiid)}\n'
+            nextep = datetime.fromtimestamp(Track.get(Track.shikiid == i.shikiid).nextep).strftime("%d.%m в %H:00")
+            text += (f'[{k + 1}]. id{i.shikiid} | '
+                     f'<a href="https://shikimori.one/animes/{i.shikiid}">{animename(i.shikiid)}</a> | {nextep}\n')
     msg = await bot.send_message(
         chat_id=query.from_user.id,
         text=text,
@@ -100,13 +114,13 @@ async def statehandler(message: Message, state: FSMContext):
     await msg.delete()
 
     if curr_state == states.Ongoing.add.state:
-        res, id = re.search(r'shikimori\.(?:one|net|me)/animes/*', message.text), ''
+        res = re.search(r'shikimori\.(?:one|net|me)/animes/*', message.text)
+        id = message.text
         if res is not None:
             id = message.text[res.end():].split('-')[0]
         checked = check(id)
-        if res is None or not id.isdigit() or checked is None:
-            msg = await bot.send_message(chat_id=message.from_user.id,
-                                         text='⚠️ Неверная ссылка.',
+        if not id.isdigit() or checked is None:
+            msg = await bot.send_message(chat_id=message.from_user.id, text='⚠️ Неверная ссылка.',
                                          reply_markup=keyboard.back())
             await state.update_data(msg=msg)
             return
@@ -143,10 +157,11 @@ async def statehandler(message: Message, state: FSMContext):
             reply_markup=keyboard.back()
         )
     elif curr_state == states.Ongoing.delete.state:
-        res, id = re.search(r'shikimori\.(?:one|net|me)/animes/*', message.text), ''
+        res = re.search(r'shikimori\.(?:one|net|me)/animes/*', message.text)
+        id = message.text
         if res is not None:
             id = message.text[res.end():].split('-')[0]
-        if res is None or not id.isdigit():
+        if not id.isdigit():
             msg = await bot.send_message(chat_id=message.from_user.id,
                                          text='⚠️ Неверная ссылка.',
                                          reply_markup=keyboard.back())
