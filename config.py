@@ -9,6 +9,6 @@ config = ConfigParser()
 config.read('config.ini')
 
 DATABASE = config['DATABASE']['NAME']
-TG_TOKEN = config['TG']['TOKEN']
+TG_TOKEN = config['TELEGRAM']['TOKEN']
 
 bot = Bot(token=TG_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
