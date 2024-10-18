@@ -17,7 +17,10 @@ def check(id: int | str) -> datetime | str | None:
     except:
         return None
     if anime['next_episode_at'] is not None:
-        return datetime.strptime(anime['next_episode_at'], '%Y-%m-%dT%H:%M:%S.%f+03:00')
+        nep = datetime.strptime(anime['next_episode_at'], '%Y-%m-%dT%H:%M:%S.%f+03:00')
+        if nep.minute > 0:
+            nep = datetime.fromtimestamp(nep.replace(minute=0).timestamp() + 3600)
+        return nep
     return anime['status']
 
 
@@ -41,7 +44,7 @@ def animephoto(id: int) -> str:
     api = Shikimori().get_api()
     try:
         anime = api.animes(id).GET()
-        return f"https://shikimori.one/{anime['image']['original']}"
+        return f"https://shikimori.one{anime['image']['original']}"
     except:
         pass
     return 'https://sun9-79.userapi.com/impg/Xdr3JgDTgSW6T2KEZRkNXtOG7_CPgyvbq-cm2w/eMz-HIrIfI0.jpg?size=449x528&quality=95&sign=88ca8e7aee93fd315bf541464021f6df&type=album'  # noqa
@@ -61,7 +64,7 @@ async def send_message_to_users_handler(
 ) -> bool:
     try:
         await bot.send_photo(user_id, photo=URLInputFile(photo), caption=caption,
-                             disable_notification=disable_notification, disable_web_page_preview=True)
+                             disable_notification=disable_notification)
     except exceptions.TelegramForbiddenError:
         logging.error(f"Target [ID:{user_id}]: blocked by user")
     except exceptions.TelegramNotFound:

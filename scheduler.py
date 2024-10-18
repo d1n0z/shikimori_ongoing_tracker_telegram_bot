@@ -12,6 +12,7 @@ from utils import mass_messaging, check, animephoto
 
 async def checker():
     try:
+        await asyncio.sleep(10)
         for i in Track.select().where(Track.nextep < time.time()):
             i: Track
             if i.name is None:
@@ -29,9 +30,12 @@ async def checker():
             elif checked is None:
                 i.delete_instance()
             else:
+                while i.nextep == int(checked.timestamp()):
+                    await asyncio.sleep(3)
+                    checked = check(i.shikiid)
                 i.nextep = checked.timestamp()
                 i.save()
-                text += f'Следующая серия выйдет {datetime.fromtimestamp(i.nextep).strftime("%d.%m в %H:00")}'
+                text += f'Следующая серия выйдет {datetime.fromtimestamp(i.nextep).strftime("%d.%m в %H:%M")}'
             await mass_messaging(
                 [y.uid for y in UsersTrack.select().where(UsersTrack.shikiid == i.shikiid)], text, i.photo)
             await asyncio.sleep(1)
@@ -42,4 +46,4 @@ async def checker():
 async def run():
     loop = asyncio.get_event_loop()
     asyncio.set_event_loop(loop)
-    aiocron.crontab('13 */1 * * *', func=checker, loop=loop)
+    aiocron.crontab('0 */1 * * *', func=checker, loop=loop)
