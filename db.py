@@ -16,6 +16,15 @@ class Track(Model):
         table_name = 'track'
 
 
+class NotUpdatedTrack(Model):
+    shikiid = IntegerField(index=True, unique=True)
+    nextupdate = BigIntegerField(null=True)
+
+    class Meta:
+        database = dbhandle
+        table_name = 'notupdatedtrack'
+
+
 class UsersTrack(Model):
     shikiid = IntegerField()
     uid = IntegerField()
