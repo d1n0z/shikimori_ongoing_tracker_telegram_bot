@@ -32,7 +32,7 @@ async def checker():
                 i.delete_instance()
             else:
                 if i.nextep == int(checked.timestamp()):
-                    t: NotUpdatedTrack = NotUpdatedTrack.get_or_create(shikiid=i.shikiid)
+                    t: NotUpdatedTrack = NotUpdatedTrack.get_or_create(shikiid=i.shikiid)[0]
                     t.nextupdate = datetime.now().timestamp() + 300
                     t.save()
                     i.nextep += 604800
