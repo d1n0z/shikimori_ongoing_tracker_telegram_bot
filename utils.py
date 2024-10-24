@@ -1,13 +1,15 @@
 import asyncio
 import logging
+import typing
 from datetime import datetime
 
+import pytz.tzinfo
 from aiogram import exceptions
-from aiogram.types import URLInputFile
+from aiogram.types import URLInputFile, InlineKeyboardMarkup, ReplyKeyboardMarkup
 from shikimori_api import Shikimori
 
 from config import bot
-from db import Track
+from db import Track, UsersTimezone
 
 
 def check(id: int | str) -> datetime | str | None:
@@ -50,21 +52,29 @@ def animephoto(id: int) -> str:
     return 'https://sun9-79.userapi.com/impg/Xdr3JgDTgSW6T2KEZRkNXtOG7_CPgyvbq-cm2w/eMz-HIrIfI0.jpg?size=449x528&quality=95&sign=88ca8e7aee93fd315bf541464021f6df&type=album'  # noqa
 
 
-async def mass_messaging(user_ids: list, caption: str, photo: str, disable_notification: bool = False) -> int:
+async def mass_messaging(
+        user_ids: list, caption: str, ongoing: Track, checked: typing.Any,
+        kbd: InlineKeyboardMarkup | ReplyKeyboardMarkup | None = None,
+) -> int:
     logging.info(f'Start mass messaging to {len(user_ids)} users...')
+
     count = 0
+    waiting_nextep = True if isinstance(checked, int) and ongoing.nextep != checked else False
     for user_id in user_ids:
-        count += await send_message_to_users_handler(user_id, caption, photo, disable_notification)
+        date = ''
+        if waiting_nextep:
+            date = f'Следующая серия выйдет {getdate(ongoing.nextep, UsersTimezone.get_or_create(uid=user_id)[0])}'
+        count += await send_message_to_users_handler(user_id, caption + date, ongoing.photo, kbd)
+
     logging.info(f'Mass messaging completed: {count}/{len(user_ids)} sent')
     return count
 
 
 async def send_message_to_users_handler(
-        user_id: int, caption: str, photo: str, disable_notification: bool = False
+        user_id: int, caption: str, photo: str, kbd: InlineKeyboardMarkup | ReplyKeyboardMarkup | None = None
 ) -> bool:
     try:
-        await bot.send_photo(user_id, photo=URLInputFile(photo), caption=caption,
-                             disable_notification=disable_notification)
+        await bot.send_photo(user_id, photo=URLInputFile(photo), caption=caption, reply_markup=kbd)
     except exceptions.TelegramForbiddenError:
         logging.error(f"Target [ID:{user_id}]: blocked by user")
     except exceptions.TelegramNotFound:
@@ -75,7 +85,7 @@ async def send_message_to_users_handler(
             f"Sleep {e.retry_after} seconds."
         )
         await asyncio.sleep(e.retry_after)
-        return await send_message_to_users_handler(user_id, caption, photo, disable_notification)
+        return await send_message_to_users_handler(user_id, caption, photo, kbd)
     except exceptions.TelegramAPIError:
         logging.exception(f"Target [ID:{user_id}]: failed")
     except Exception as e:
@@ -84,3 +94,11 @@ async def send_message_to_users_handler(
         logging.info(f"Target [ID:{user_id}]: success")
         return True
     return False
+
+
+def getdate(ts: int | float, tz: pytz.tzinfo.DstTzInfo | str | None = 'Europe/Moscow') -> str:
+    if tz is None:
+        tz = pytz.timezone('Europe/Moscow')
+    elif isinstance(tz, str):
+        tz = pytz.timezone(tz)
+    return datetime.fromtimestamp(ts, tz).strftime('%d.%m в %H:00')

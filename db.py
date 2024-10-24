@@ -34,4 +34,24 @@ class UsersTrack(Model):
         table_name = 'userstrack'
 
 
+class UsersTimezone(Model):
+    uid = IntegerField()
+    timezone = TextField(default='Europe/Moscow')
+
+    class Meta:
+        database = dbhandle
+        table_name = 'userstimezone'
+
+
+class UsersShikimoriTokens(Model):
+    uid = IntegerField()
+    access = TextField(null=True)
+    refresh = TextField(null=True)
+    expires_at = BigIntegerField(null=True)
+
+    class Meta:
+        database = dbhandle
+        table_name = 'usersshikimoritokens'
+
+
 dbhandle.create_tables(Model.__subclasses__())
