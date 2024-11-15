@@ -2,6 +2,7 @@ import asyncio
 import logging
 import typing
 from datetime import datetime
+from typing import Any, Tuple
 
 import pytz.tzinfo
 from aiogram import exceptions
@@ -50,6 +51,19 @@ def animephoto(id: int) -> str:
     except:
         pass
     return 'https://sun9-79.userapi.com/impg/Xdr3JgDTgSW6T2KEZRkNXtOG7_CPgyvbq-cm2w/eMz-HIrIfI0.jpg?size=449x528&quality=95&sign=88ca8e7aee93fd315bf541464021f6df&type=album'  # noqa
+
+
+def animeepisodes(id: int) -> tuple[int, int] | None:
+    if t := Track.get_or_none(Track.shikiid == id):
+        if t.photo is not None:
+            return t.photo
+    api = Shikimori().get_api()
+    try:
+        anime = api.animes(id).GET()
+        return int(anime['episodes_aired']), int(anime['episodes'])
+    except:
+        pass
+    return None
 
 
 async def mass_messaging(

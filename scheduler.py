@@ -9,7 +9,7 @@ import aiocron
 import shikimori_utils
 import keyboard
 from db import Track, UsersTrack, NotUpdatedTrack, UsersShikimoriTokens
-from utils import check, animephoto, mass_messaging, animename
+from utils import check, animephoto, mass_messaging, animename, animeepisodes
 
 
 async def checker():
@@ -23,16 +23,16 @@ async def checker():
             if i.photo is None:
                 i.photo = animephoto(i.shikiid)
                 i.save()
-            text = f'Вышла новая серия аниме <a href="https://shikimori.one/animes/{i.shikiid}">{i.name}</a>!\n'
+            episodes = animeepisodes(i.shikiid)
+            epprogress = f'{episodes[0] + 1}/{episodes[1]}' if episodes else 'новая'
+            text = f'Вышла {epprogress} серия аниме <a href="https://shikimori.one/animes/{i.shikiid}">{i.name}</a>!\n'
 
             checked = check(i.shikiid)
             if isinstance(checked, str | None):
-                if checked == 'released':
+                if episodes and (episodes[0] + 1) >= episodes[1]:
                     text += 'Это последняя серия. Отслеживание аниме автоматически отключено'
                 elif checked is None:
                     i.delete_instance()
-                else:
-                    text += f'Статус аниме изменился на {checked}. Отслеживание аниме автоматически отключено'
             else:
                 checked = int(checked.timestamp())
                 if i.nextep != checked:
