@@ -24,12 +24,12 @@ async def checker():
                 i.photo = animephoto(i.shikiid)
                 i.save()
             episodes = animeepisodes(i.shikiid)
-            epprogress = f'{episodes[0] + 1}/{episodes[1]}' if episodes else 'новая'
-            text = f'Вышла {epprogress} серия аниме <a href="https://shikimori.one/animes/{i.shikiid}">{i.name}</a>!\n'
+            epprg = f'({episodes[0] + 1}/{episodes[1]}) ' if episodes and episodes[0] and episodes[1] else ''
+            text = f'Вышла новая серия {epprg}аниме <a href="https://shikimori.one/animes/{i.shikiid}">{i.name}</a>!\n'
 
             checked = check(i.shikiid)
             if isinstance(checked, str | None):
-                if episodes and (episodes[0] + 1) >= episodes[1]:
+                if episodes and episodes[0] and episodes[1] and (episodes[0] + 1) >= episodes[1]:
                     text += 'Это последняя серия. Отслеживание аниме автоматически отключено'
                 elif checked is None:
                     i.delete_instance()
