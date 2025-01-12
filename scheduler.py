@@ -24,13 +24,15 @@ async def checker():
                 i.photo = animephoto(i.shikiid)
                 i.save()
             episodes = animeepisodes(i.shikiid)
-            epprg = f'({episodes[0] + 1}/{episodes[1]}) ' if episodes and episodes[0] and episodes[1] else ''
+            epprg = f'({episodes[0]}/{episodes[1]}) ' if episodes and episodes[0] and episodes[1] else ''
             text = f'Вышла новая серия {epprg}аниме <a href="https://shikimori.one/animes/{i.shikiid}">{i.name}</a>!\n'
 
             checked = check(i.shikiid)
             if isinstance(checked, str | None):
-                if episodes and episodes[0] and episodes[1] and (episodes[0] + 1) >= episodes[1]:
+                if episodes and episodes[0] and episodes[1] and episodes[0] >= episodes[1]:
                     text += 'Это последняя серия. Отслеживание аниме автоматически отключено'
+                    Track.delete().where(Track.shikiid == i.shikiid).execute()
+                    NotUpdatedTrack.delete().where(NotUpdatedTrack.shikiid == i.shikiid).execute()
                 elif checked is None:
                     i.delete_instance()
             else:
@@ -58,8 +60,9 @@ async def updater():
             if t is None:
                 i.delete_instance()
                 continue
+            episodes = animeepisodes(i.shikiid)
             checked = check(i.shikiid)
-            if isinstance(checked, datetime):
+            if isinstance(checked, datetime) and (not episodes or episodes[0] != episodes[1]):
                 if t.nextep == int(checked.timestamp()):
                     i.nextupdate += 300
                     i.save()
